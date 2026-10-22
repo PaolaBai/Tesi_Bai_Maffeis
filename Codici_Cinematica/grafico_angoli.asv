@@ -1,0 +1,1086 @@
+clear
+close all
+clc
+
+%% caricamento struct con indici
+
+load('Implementazione_ROM.mat');
+
+% sottocartelle
+gruppo = {'Sani', 'Patologici'};
+id_sano = {'H002', 'H003', 'H004', 'H005', 'H006', 'H008', 'H009', 'H010', 'H011', 'H013', 'H016', 'H017', 'H018'};
+id_patologico = {'S001', 'S004', 'S011', 'S012', 'S013', 'S014', 'S015', 'S025', 'S026', 'S027', 'S028', 'S031', 'S032', 'S034', 'S036', 'S037', 'S041', 'S046', 'S047', 'S052'};
+timepoint_sano = {'T'};
+timepoint_patologico = {'T0', 'T1'};
+indice1 = {'jerk', 'LDLJ', 'SPARC', 'skewness'};
+indice2 = {'angolo_spalla_medio', 'ROM_spalla', 'angolo_sagittale_medio', 'ROM_tronco_sagittale', 'angolo_frontale_medio', 'ROM_tronco_frontale', 'angolo_torsione_medio', 'ROM_tronco_torsione'};
+task_motori = {'Addu', 'Addu_orizz', 'Flex', 'Circ', 'RandG'};
+sottocartelle4 = {'Right', 'Left'};
+sottocartelle5 = {'R_avanti', 'R_indietro', 'L_avanti', 'L_indietro'};
+sottocartelle6 = {'Reach', 'Grasp'};
+sottocartelle_ar = {'Andata', 'Ritorno', 'Totale'};
+sottocartelle_ad = {'Accelerazione', 'Decelerazione', 'Totale'};
+
+%%
+
+
+t_norm = 0:1:100;       % griglia temporale a 101 punti (0% - 100%)
+t_norm = t_norm(:).';       % Forziamo a vettore riga (1 x 101)
+
+angolo_target = 'angolo_spalla_medio';
+
+Matrice_Sani_Addu = [];
+Matrice_Sani_Addu_orizz = [];
+Matrice_Sani_Flex = [];
+Matrice_Sani_Circ = [];
+Matrice_Sani_Reach = [];
+Matrice_Sani_Grasp = [];
+
+Matrice_Patologici_Addu_affettoT0 = [];
+Matrice_Patologici_Addu_orizz_affettoT0 = [];
+Matrice_Patologici_Flex_affettoT0 = [];
+Matrice_Patologici_Circ_affettoT0 = [];
+Matrice_Patologici_Reach_affettoT0 = [];
+Matrice_Patologici_Grasp_affettoT0 = [];
+
+Matrice_Patologici_Addu_affettoT1 = [];
+Matrice_Patologici_Addu_orizz_affettoT1 = [];
+Matrice_Patologici_Flex_affettoT1 = [];
+Matrice_Patologici_Circ_affettoT1 = [];
+Matrice_Patologici_Reach_affettoT1 = [];
+Matrice_Patologici_Grasp_affettoT1 = [];
+
+info_soggetti = readtable('Tabella lato affetto.xlsx');
+
+%% ESTRAZIONE DINAMICA DAI GRUPPI
+
+for ii = 1:length(gruppo)       % scorro i gruppi
+    gruppo_corrente = gruppo{ii};
+
+    if ii == 1      % sono in sani
+
+        for jj = 1:length(id_sano)      % scorro i soggetti
+            soggetto_corrente = id_sano{jj};
+
+            for ll = 1:length(task_motori)         % scorro le task
+                task_corrente = task_motori{ll};
+
+                if ll == 1         % vale per Addu (ll=1)
+
+                    for mm = 1:length(sottocartelle4)       % scorro dx e sx
+                        lato_corrente = sottocartelle4{mm};
+
+                        %if mm == 1           % sono in dx
+
+                        for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                            tratto_corrente = sottocartelle_ar{oo};
+
+                            if oo == 3      % totale
+
+                                for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                    nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(task_corrente).(lato_corrente).(tratto_corrente), nome_ciclo)
+
+                                        vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(nome_ciclo).(angolo_target);
+
+                                        t_orig = linspace(0, 100, length(vettore_ang));         % normalizzazione
+                                        ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                        Matrice_Sani_Addu(end+1, :) = ang_101(:).';     % dx + sx
+                                    end
+                                end
+                            end
+                        end
+                        %end
+                    end
+
+                elseif ll == 2         % vale per Addu_orizz
+
+                    for mm = 1:length(sottocartelle4)       % scorro dx e sx
+                        lato_corrente = sottocartelle4{mm};
+
+                        %if mm == 1           % sono in dx
+
+                        for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                            tratto_corrente = sottocartelle_ar{oo};
+
+                            if oo == 3      % totale
+
+                                for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                    nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(task_corrente).(lato_corrente).(tratto_corrente), nome_ciclo)
+
+                                        vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(nome_ciclo).(angolo_target);
+
+                                        t_orig = linspace(0, 100, length(vettore_ang));
+                                        ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                        Matrice_Sani_Addu_orizz(end+1, :) = ang_101(:).';       % dx + sx
+                                    end
+                                end
+                            end
+                        end
+                        %end
+                    end
+
+                elseif ll == 3         % vale per Flex
+
+                    for mm = 1:length(sottocartelle4)       % scorro dx e sx
+                        lato_corrente = sottocartelle4{mm};
+
+                        %if mm == 1           % sono in dx
+
+                        for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                            tratto_corrente = sottocartelle_ar{oo};
+
+                            if oo == 3      % totale
+
+                                for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                    nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(task_corrente).(lato_corrente).(tratto_corrente), nome_ciclo)
+
+                                        vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(nome_ciclo).(angolo_target);
+
+                                        t_orig = linspace(0, 100, length(vettore_ang));
+                                        ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                        Matrice_Sani_Flex(end+1, :) = ang_101(:).';     % dx + sx
+                                    end
+                                end
+                            end
+                        end
+                        %end
+                    end
+
+                elseif ll == 4         % vale per Circ
+
+                    for mm = 1:length(sottocartelle5)       % scorro dx e sx, avanti e indietro
+                        lato_corrente = sottocartelle5{mm};
+
+                        %if mm == 1           % sono in dx
+
+                        for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                            tratto_corrente = sottocartelle_ar{oo};
+
+                            if oo == 3      % totale
+
+                                for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                    nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(task_corrente).(lato_corrente).(tratto_corrente), nome_ciclo)
+
+                                        vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(nome_ciclo).(angolo_target);
+
+                                        t_orig = linspace(0, 100, length(vettore_ang));
+                                        ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                        Matrice_Sani_Circ(end+1, :) = ang_101(:).';         % dx avanti + dx indietro + sx avanti + sx indietro
+                                    end
+                                end
+                            end
+                        end
+                        %end
+                    end
+
+                elseif ll == 5         % vale per RandG
+
+                    for mm = 1:length(sottocartelle6)       % scorro dx e sx
+                        lato_corrente = sottocartelle6{mm};
+
+                        if mm == 1           % sono in reach
+
+                            for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                tratto_corrente = sottocartelle_ar{oo};
+
+                                if oo == 3      % totale
+
+                                    for qq = 1:length(sottocartelle_ad)         % scorro accelerazione, decelerazione, totale
+                                        accelerazione_corrente = sottocartelle_ad{qq};
+
+                                        if qq == 3      % totale
+
+                                            for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                                nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(accelerazione_corrente), nome_ciclo)
+
+                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(accelerazione_corrente).(nome_ciclo).(angolo_target);
+
+                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                    Matrice_Sani_Reach(end+1, :) = ang_101(:).';
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+
+                        elseif mm == 2      % sono in grasp
+
+                            for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                tratto_corrente = sottocartelle_ar{oo};
+
+                                if oo == 3      % totale
+
+                                    for qq = 1:length(sottocartelle_ad)         % scorro accelerazione, decelerazione, totale
+                                        accelerazione_corrente = sottocartelle_ad{qq};
+
+                                        if qq == 3      % totale
+
+                                            for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                                nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(accelerazione_corrente), nome_ciclo)
+
+                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(accelerazione_corrente).(nome_ciclo).(angolo_target);
+
+                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                    Matrice_Sani_Grasp(end+1, :) = ang_101(:).';
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+    elseif ii == 2      % sono in patologici
+
+        for jj = 1:length(id_patologico)      % scorro i soggetti
+            soggetto_corrente = id_patologico{jj};
+
+            riga_soggetto = strcmp(info_soggetti{:, 1}, soggetto_corrente);
+            lato_affetto = info_soggetti{riga_soggetto, 2};
+
+            for pp = 1:length(timepoint_patologico)
+                timepoint_corrente = timepoint_patologico{pp};
+
+                if pp == 1         % sono al tempo T0
+
+                    for ll = 1:length(task_motori)         % scorro le task
+                        task_corrente = task_motori{ll};
+
+                        if ll == 1         % vale per Addu (ll=1)
+
+                            %for mm = 1:length(sottocartelle4)       % scorro dx e sx
+                            %lato_corrente = sottocartelle4{mm};
+
+                            if contains(string(lato_affetto), 'DX', 'IgnoreCase', true)
+                                mm = 1;           % sono in dx
+                                lato_corrente = sottocartelle4{mm};
+
+                                for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                    tratto_corrente = sottocartelle_ar{oo};
+
+                                    if oo == 3      % totale
+
+                                        for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                            nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                            if isfield(Database_angoli_articolari.(gruppo_corrente), soggetto_corrente)
+                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente), timepoint_corrente)
+                                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente), task_corrente)
+                                                        if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente), lato_corrente)
+                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente), tratto_corrente)
+                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente), nome_ciclo)
+
+                                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(nome_ciclo).(angolo_target);
+
+                                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                                    Matrice_Patologici_Addu_affettoT0(end+1, :) = ang_101(:).';
+                                                                end
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+
+                            elseif contains(string(lato_affetto), 'SX', 'IgnoreCase', true)
+                                mm = 2;           % sono in dx
+                                lato_corrente = sottocartelle4{mm};
+
+                                for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                    tratto_corrente = sottocartelle_ar{oo};
+
+                                    if oo == 3      % totale
+
+                                        for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                            nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                            if isfield(Database_angoli_articolari.(gruppo_corrente), soggetto_corrente)
+                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente), timepoint_corrente)
+                                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente), task_corrente)
+                                                        if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente), lato_corrente)
+                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente), tratto_corrente)
+                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente), nome_ciclo)
+
+                                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(nome_ciclo).(angolo_target);
+
+                                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                                    Matrice_Patologici_Addu_affettoT0(end+1, :) = ang_101(:).';
+                                                                end
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                                %end
+                            end
+
+                        elseif ll == 2         % vale per Addu_orizz
+
+                            for mm = 1:length(sottocartelle4)       % scorro dx e sx
+                                lato_corrente = sottocartelle4{mm};
+
+                                %if mm == 1           % sono in dx
+
+                                for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                    tratto_corrente = sottocartelle_ar{oo};
+
+                                    if oo == 3      % totale
+
+                                        for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                            nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                            if isfield(Database_angoli_articolari.(gruppo_corrente), soggetto_corrente)
+                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente), timepoint_corrente)
+                                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente), task_corrente)
+                                                        if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente), lato_corrente)
+                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente), tratto_corrente)
+                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente), nome_ciclo)
+
+                                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(nome_ciclo).(angolo_target);
+
+                                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                                    Matrice_Patologici_Addu_orizz_affettoT0(end+1, :) = ang_101(:).';       % dx + sx
+                                                                end
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                                %end
+                            end
+
+                        elseif ll == 3         % vale per Flex
+
+                            for mm = 1:length(sottocartelle4)       % scorro dx e sx
+                                lato_corrente = sottocartelle4{mm};
+
+                                %if mm == 1           % sono in dx
+
+                                for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                    tratto_corrente = sottocartelle_ar{oo};
+
+                                    if oo == 3      % totale
+
+                                        for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                            nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                            if isfield(Database_angoli_articolari.(gruppo_corrente), soggetto_corrente)
+                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente), timepoint_corrente)
+                                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente), task_corrente)
+                                                        if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente), lato_corrente)
+                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente), tratto_corrente)
+                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente), nome_ciclo)
+
+                                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(nome_ciclo).(angolo_target);
+
+                                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                                    Matrice_Patologici_Flex_affettoT0(end+1, :) = ang_101(:).';     % dx + sx
+                                                                end
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                                %end
+                            end
+
+                        elseif ll == 4         % vale per Circ
+
+                            for mm = 1:length(sottocartelle5)       % scorro dx e sx, avanti e indietro
+                                lato_corrente = sottocartelle5{mm};
+
+                                %if mm == 1           % sono in dx
+
+                                for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                    tratto_corrente = sottocartelle_ar{oo};
+
+                                    if oo == 3      % totale
+
+                                        for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                            nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                            if isfield(Database_angoli_articolari.(gruppo_corrente), soggetto_corrente)
+                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente), timepoint_corrente)
+                                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente), task_corrente)
+                                                        if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente), lato_corrente)
+                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente), tratto_corrente)
+                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente), nome_ciclo)
+
+                                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(nome_ciclo).(angolo_target);
+
+                                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                                    Matrice_Patologici_Circ_affettoT0(end+1, :) = ang_101(:).';         % dx avanti + dx indietro + sx avanti + sx indietro
+                                                                end
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                                %end
+                            end
+
+                        elseif ll == 5         % vale per RandG
+
+                            for mm = 1:length(sottocartelle6)       % scorro dx e sx
+                                lato_corrente = sottocartelle6{mm};
+
+                                if mm == 1           % sono in reach
+
+                                    for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                        tratto_corrente = sottocartelle_ar{oo};
+
+                                        if oo == 3      % totale
+
+                                            for qq = 1:length(sottocartelle_ad)         % scorro accelerazione, decelerazione, totale
+                                                accelerazione_corrente = sottocartelle_ad{qq};
+
+                                                if qq == 3      % totale
+
+                                                    for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                                        nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                                        if isfield(Database_angoli_articolari.(gruppo_corrente), soggetto_corrente)
+                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente), timepoint_corrente)
+                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente), task_corrente)
+                                                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente), lato_corrente)
+                                                                        if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente), tratto_corrente)
+                                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente), accelerazione_corrente)
+                                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(accelerazione_corrente), nome_ciclo)
+
+                                                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(accelerazione_corrente).(nome_ciclo).(angolo_target);
+
+                                                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                                                    Matrice_Patologici_Reach_affettoT0(end+1, :) = ang_101(:).';
+                                                                                end
+                                                                            end
+                                                                        end
+                                                                    end
+                                                                end
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+
+                                elseif mm == 2      % sono in grasp
+
+                                    for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                        tratto_corrente = sottocartelle_ar{oo};
+
+                                        if oo == 3      % totale
+
+                                            for qq = 1:length(sottocartelle_ad)         % scorro accelerazione, decelerazione, totale
+                                                accelerazione_corrente = sottocartelle_ad{qq};
+
+                                                if qq == 3      % totale
+
+                                                    for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                                        nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                                        if isfield(Database_angoli_articolari.(gruppo_corrente), soggetto_corrente)
+                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente), timepoint_corrente)
+                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente), task_corrente)
+                                                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente), lato_corrente)
+                                                                        if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente), tratto_corrente)
+                                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente), accelerazione_corrente)
+                                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(accelerazione_corrente), nome_ciclo)
+
+                                                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(accelerazione_corrente).(nome_ciclo).(angolo_target);
+
+                                                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                                                    Matrice_Patologici_Grasp_affettoT0(end+1, :) = ang_101(:).';
+                                                                                end
+                                                                            end
+                                                                        end
+                                                                    end
+                                                                end
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+
+                elseif pp == 2          % sono al tempo T1
+
+                    for ll = 1:length(task_motori)         % scorro le task
+                        task_corrente = task_motori{ll};
+
+                        if ll == 1         % vale per Addu (ll=1)
+
+                            lato_corrente = sottocartelle4{mm};
+
+                            if contains(string(lato_affetto), 'DX', 'IgnoreCase', true)
+                                mm = 1;           % sono in dx
+                                lato_corrente = sottocartelle4{mm};
+
+                                for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                    tratto_corrente = sottocartelle_ar{oo};
+
+                                    if oo == 3      % totale
+
+                                        for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                            nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                            if isfield(Database_angoli_articolari.(gruppo_corrente), soggetto_corrente)
+                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente), timepoint_corrente)
+                                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente), task_corrente)
+                                                        if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente), lato_corrente)
+                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente), tratto_corrente)
+                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente), nome_ciclo)
+
+                                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(nome_ciclo).(angolo_target);
+
+                                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                                    Matrice_Patologici_Addu_affettoT1(end+1, :) = ang_101(:).';
+                                                                end
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+
+                            elseif contains(string(lato_affetto), 'SX', 'IgnoreCase', true)
+                                mm = 2;           % sono in dx
+                                lato_corrente = sottocartelle4{mm};
+
+                                for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                    tratto_corrente = sottocartelle_ar{oo};
+
+                                    if oo == 3      % totale
+
+                                        for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                            nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                            if isfield(Database_angoli_articolari.(gruppo_corrente), soggetto_corrente)
+                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente), timepoint_corrente)
+                                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente), task_corrente)
+                                                        if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente), lato_corrente)
+                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente), tratto_corrente)
+                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente), nome_ciclo)
+
+                                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(nome_ciclo).(angolo_target);
+
+                                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                                    Matrice_Patologici_Addu_affettoT1(end+1, :) = ang_101(:).';
+                                                                end
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+
+                        elseif ll == 2         % vale per Addu_orizz
+
+                            lato_corrente = sottocartelle4{mm};
+
+                            if contains(string(lato_affetto), 'DX', 'IgnoreCase', true)
+                                mm = 1;           % sono in dx
+                                lato_corrente = sottocartelle4{mm};
+
+                                for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                    tratto_corrente = sottocartelle_ar{oo};
+
+                                    if oo == 3      % totale
+
+                                        for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                            nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                            if isfield(Database_angoli_articolari.(gruppo_corrente), soggetto_corrente)
+                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente), timepoint_corrente)
+                                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente), task_corrente)
+                                                        if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente), lato_corrente)
+                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente), tratto_corrente)
+                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente), nome_ciclo)
+
+                                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(nome_ciclo).(angolo_target);
+
+                                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                                    Matrice_Patologici_Addu_orizz_affettoT1(end+1, :) = ang_101(:).';
+                                                                end
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+
+                            elseif contains(string(lato_affetto), 'SX', 'IgnoreCase', true)
+                                mm = 2;           % sono in dx
+                                lato_corrente = sottocartelle4{mm};
+
+                                for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                    tratto_corrente = sottocartelle_ar{oo};
+
+                                    if oo == 3      % totale
+
+                                        for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                            nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                            if isfield(Database_angoli_articolari.(gruppo_corrente), soggetto_corrente)
+                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente), timepoint_corrente)
+                                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente), task_corrente)
+                                                        if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente), lato_corrente)
+                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente), tratto_corrente)
+                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente), nome_ciclo)
+
+                                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(nome_ciclo).(angolo_target);
+
+                                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                                    Matrice_Patologici_Addu_orizz_affettoT1(end+1, :) = ang_101(:).';
+                                                                end
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+
+                        elseif ll == 3         % vale per Flex
+
+                            lato_corrente = sottocartelle4{mm};
+
+                            if contains(string(lato_affetto), 'DX', 'IgnoreCase', true)
+                                mm = 1;           % sono in dx
+                                lato_corrente = sottocartelle4{mm};
+
+                                for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                    tratto_corrente = sottocartelle_ar{oo};
+
+                                    if oo == 3      % totale
+
+                                        for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                            nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                            if isfield(Database_angoli_articolari.(gruppo_corrente), soggetto_corrente)
+                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente), timepoint_corrente)
+                                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente), task_corrente)
+                                                        if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente), lato_corrente)
+                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente), tratto_corrente)
+                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente), nome_ciclo)
+
+                                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(nome_ciclo).(angolo_target);
+
+                                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                                    Matrice_Patologici_Flex_affettoT1(end+1, :) = ang_101(:).';
+                                                                end
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+
+                            elseif contains(string(lato_affetto), 'SX', 'IgnoreCase', true)
+                                mm = 2;           % sono in dx
+                                lato_corrente = sottocartelle4{mm};
+
+                                for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                    tratto_corrente = sottocartelle_ar{oo};
+
+                                    if oo == 3      % totale
+
+                                        for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                            nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                            if isfield(Database_angoli_articolari.(gruppo_corrente), soggetto_corrente)
+                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente), timepoint_corrente)
+                                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente), task_corrente)
+                                                        if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente), lato_corrente)
+                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente), tratto_corrente)
+                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente), nome_ciclo)
+
+                                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(nome_ciclo).(angolo_target);
+
+                                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                                    Matrice_Patologici_Flex_affettoT1(end+1, :) = ang_101(:).';
+                                                                end
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+
+                        elseif ll == 4         % vale per Circ
+
+                            for mm = 1:length(sottocartelle5)       % scorro dx e sx, avanti e indietro
+                                lato_corrente = sottocartelle5{mm};
+
+                                %if mm == 1           % sono in dx
+
+                                for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                    tratto_corrente = sottocartelle_ar{oo};
+
+                                    if oo == 3      % totale
+
+                                        for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                            nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                            if isfield(Database_angoli_articolari.(gruppo_corrente), soggetto_corrente)
+                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente), timepoint_corrente)
+                                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente), task_corrente)
+                                                        if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente), lato_corrente)
+                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente), tratto_corrente)
+                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente), nome_ciclo)
+
+                                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(nome_ciclo).(angolo_target);
+
+                                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                                    Matrice_Patologici_Circ_affettoT0(end+1, :) = ang_101(:).';         % dx avanti + dx indietro + sx avanti + sx indietro
+                                                                end
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                                %end
+                            end
+
+                        elseif ll == 5         % vale per RandG
+
+                            for mm = 1:length(sottocartelle6)       % scorro dx e sx
+                                lato_corrente = sottocartelle6{mm};
+
+                                if mm == 1           % sono in reach
+
+                                    for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                        tratto_corrente = sottocartelle_ar{oo};
+
+                                        if oo == 3      % totale
+
+                                            for qq = 1:length(sottocartelle_ad)         % scorro accelerazione, decelerazione, totale
+                                                accelerazione_corrente = sottocartelle_ad{qq};
+
+                                                if qq == 3      % totale
+
+                                                    for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                                        nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                                        if isfield(Database_angoli_articolari.(gruppo_corrente), soggetto_corrente)
+                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente), timepoint_corrente)
+                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente), task_corrente)
+                                                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente), lato_corrente)
+                                                                        if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente), tratto_corrente)
+                                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente), accelerazione_corrente)
+                                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(accelerazione_corrente), nome_ciclo)
+
+                                                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(accelerazione_corrente).(nome_ciclo).(angolo_target);
+
+                                                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                                                    Matrice_Patologici_Reach_affettoT0(end+1, :) = ang_101(:).';
+                                                                                end
+                                                                            end
+                                                                        end
+                                                                    end
+                                                                end
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+
+                                elseif mm == 2      % sono in grasp
+
+                                    for oo = 1:length(sottocartelle_ar)         % scorro andata e ritorno
+                                        tratto_corrente = sottocartelle_ar{oo};
+
+                                        if oo == 3      % totale
+
+                                            for qq = 1:length(sottocartelle_ad)         % scorro accelerazione, decelerazione, totale
+                                                accelerazione_corrente = sottocartelle_ad{qq};
+
+                                                if qq == 3      % totale
+
+                                                    for nn = 1:5        % scorro i 5 cicli          % DA CAMBIARE SE NON CI SONO TUTTI E 5 I CICLI
+                                                        nome_ciclo = sprintf('Ciclo_%d', nn);
+
+                                                        if isfield(Database_angoli_articolari.(gruppo_corrente), soggetto_corrente)
+                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente), timepoint_corrente)
+                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente), task_corrente)
+                                                                    if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente), lato_corrente)
+                                                                        if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente), tratto_corrente)
+                                                                            if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente), accelerazione_corrente)
+                                                                                if isfield(Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(accelerazione_corrente), nome_ciclo)
+
+                                                                                    vettore_ang = Database_angoli_articolari.(gruppo_corrente).(soggetto_corrente).(timepoint_corrente).(task_corrente).(lato_corrente).(tratto_corrente).(accelerazione_corrente).(nome_ciclo).(angolo_target);
+
+                                                                                    t_orig = linspace(0, 100, length(vettore_ang));
+                                                                                    ang_101 = interp1(t_orig, vettore_ang, t_norm, 'spline');
+
+                                                                                    Matrice_Patologici_Grasp_affettoT0(end+1, :) = ang_101(:).';
+                                                                                end
+                                                                            end
+                                                                        end
+                                                                    end
+                                                                end
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+%% grafico Addu
+
+media_sani = mean(Matrice_Sani_Addu, 1, 'omitnan');
+media_sani = media_sani(:).';
+sd_sani = std(Matrice_Sani_Addu, 0, 1, 'omitnan');
+sd_sani = sd_sani(:).';
+
+media_patT0 = mean(Matrice_Patologici_Addu_affettoT0, 1, 'omitnan');
+media_patT0 = media_patT0(:).';
+sd_patT0 = std(Matrice_Patologici_Addu_affettoT0, 0, 1, 'omitnan');
+sd_patT0 = sd_patT0(:).';
+
+media_patT1 = mean(Matrice_Patologici_Addu_affettoT1, 1, 'omitnan');
+media_patT1 = media_patT1(:).';
+sd_patT1 = std(Matrice_Patologici_Addu_affettoT1, 0, 1, 'omitnan');
+sd_patT1 = sd_patT1(:).';
+
+figure('Color', 'w');
+hold on; grid on;
+
+% Palette Colori
+col_sani = [0.2, 0.6, 0.85]; % Blu
+col_patT0 = [0.85, 0.3, 0.3];  % Rosso
+col_patT1 = [0.5, 0.2, 0.6];  % Viola
+
+% SD
+y_upper_sani = media_sani + sd_sani;
+y_lower_sani = media_sani - sd_sani;
+fill([t_norm, fliplr(t_norm)], [y_upper_sani, fliplr(y_lower_sani)], col_sani, 'EdgeColor', 'none', 'FaceAlpha', 0.25, 'HandleVisibility', 'off');
+
+y_upper_patT0 = media_patT0 + sd_patT0;
+y_lower_patT0 = media_patT0 - sd_patT0;
+fill([t_norm, fliplr(t_norm)], [y_upper_patT0, fliplr(y_lower_patT0)], col_patT0, 'EdgeColor', 'none', 'FaceAlpha', 0.25, 'HandleVisibility', 'off');
+
+y_upper_patT1 = media_patT1 + sd_patT1;
+y_lower_patT1 = media_patT1 - sd_patT1;
+fill([t_norm, fliplr(t_norm)], [y_upper_patT1, fliplr(y_lower_patT1)], col_patT1, 'EdgeColor', 'none', 'FaceAlpha', 0.25, 'HandleVisibility', 'off');
+
+% media
+h1 = plot(t_norm, media_sani, 'Color', col_sani, 'LineWidth', 2.5, 'DisplayName', 'Sani');
+h2 = plot(t_norm, media_patT0,  'Color', col_patT0,  'LineWidth', 2.5, 'DisplayName', 'Patologici T0');
+h3 = plot(t_norm, media_patT1,  'Color', col_patT1,  'LineWidth', 2.5, 'DisplayName', 'Patologici T1');
+
+% grafico
+xlabel('Ciclo di Movimento (%)', 'FontSize', 12, 'FontWeight', 'bold');
+ylabel('Angolo Articolare [deg]', 'FontSize', 12, 'FontWeight', 'bold');
+title(['Andamento Angolare: Addu '], 'FontSize', 13, 'FontWeight', 'bold');
+
+xlim([0, 100]);
+legend([h1, h2, h3], 'Location', 'best');
+set(gca, 'Box', 'off', 'TickDir', 'out', 'FontSize', 11, 'FontName', 'Arial');
+
+%% grafico Addu_orizz
+
+media_sani = mean(Matrice_Sani_Addu_orizz, 1, 'omitnan');
+media_sani = media_sani(:).';
+sd_sani = std(Matrice_Sani_Addu_orizz, 0, 1, 'omitnan');
+sd_sani = sd_sani(:).';
+
+media_patT0 = mean(Matrice_Patologici_Addu_orizz_affettoT0, 1, 'omitnan');
+media_patT0 = media_patT0(:).';
+sd_patT0 = std(Matrice_Patologici_Addu_orizz_affettoT0, 0, 1, 'omitnan');
+sd_patT0 = sd_patT0(:).';
+
+media_patT1 = mean(Matrice_Patologici_Addu_orizz_affettoT1, 1, 'omitnan');
+media_patT1 = media_patT1(:).';
+sd_patT1 = std(Matrice_Patologici_Addu_orizz_affettoT1, 0, 1, 'omitnan');
+sd_patT1 = sd_patT1(:).';
+
+figure('Color', 'w');
+hold on; grid on;
+
+% Palette Colori
+col_sani = [0.2, 0.6, 0.85]; % Blu
+col_patT0 = [0.85, 0.3, 0.3];  % Rosso
+col_patT1 = [0.5, 0.2, 0.6];  % Viola
+
+% SD
+y_upper_sani = media_sani + sd_sani;
+y_lower_sani = media_sani - sd_sani;
+fill([t_norm, fliplr(t_norm)], [y_upper_sani, fliplr(y_lower_sani)], col_sani, 'EdgeColor', 'none', 'FaceAlpha', 0.25, 'HandleVisibility', 'off');
+
+y_upper_patT0 = media_patT0 + sd_patT0;
+y_lower_patT0 = media_patT0 - sd_patT0;
+fill([t_norm, fliplr(t_norm)], [y_upper_patT0, fliplr(y_lower_patT0)], col_patT0, 'EdgeColor', 'none', 'FaceAlpha', 0.25, 'HandleVisibility', 'off');
+
+y_upper_patT1 = media_patT1 + sd_patT1;
+y_lower_patT1 = media_patT1 - sd_patT1;
+fill([t_norm, fliplr(t_norm)], [y_upper_patT1, fliplr(y_lower_patT1)], col_patT1, 'EdgeColor', 'none', 'FaceAlpha', 0.25, 'HandleVisibility', 'off');
+
+% media
+h1 = plot(t_norm, media_sani, 'Color', col_sani, 'LineWidth', 2.5, 'DisplayName', 'Sani');
+h2 = plot(t_norm, media_patT0,  'Color', col_patT0,  'LineWidth', 2.5, 'DisplayName', 'Patologici T0');
+h3 = plot(t_norm, media_patT1,  'Color', col_patT1,  'LineWidth', 2.5, 'DisplayName', 'Patologici T1');
+
+% grafico
+xlabel('Ciclo di Movimento (%)', 'FontSize', 12, 'FontWeight', 'bold');
+ylabel('Angolo Articolare [deg]', 'FontSize', 12, 'FontWeight', 'bold');
+title(['Andamento Angolare: Addu_orizz '], 'FontSize', 13, 'FontWeight', 'bold');
+
+xlim([0, 100]);
+legend([h1, h2, h3], 'Location', 'best');
+set(gca, 'Box', 'off', 'TickDir', 'out', 'FontSize', 11, 'FontName', 'Arial');
+
+%% grafico Flex
+
+media_sani = mean(Matrice_Sani_Flex, 1, 'omitnan');
+media_sani = media_sani(:).';
+sd_sani = std(Matrice_Sani_Flex, 0, 1, 'omitnan');
+sd_sani = sd_sani(:).';
+
+media_patT0 = mean(Matrice_Patologici_Flex_affettoT0, 1, 'omitnan');
+media_patT0 = media_patT0(:).';
+sd_patT0 = std(Matrice_Patologici_Flex_affettoT0, 0, 1, 'omitnan');
+sd_patT0 = sd_patT0(:).';
+
+media_patT1 = mean(Matrice_Patologici_Flex_affettoT1, 1, 'omitnan');
+media_patT1 = media_patT1(:).';
+sd_patT1 = std(Matrice_Patologici_Flex_affettoT1, 0, 1, 'omitnan');
+sd_patT1 = sd_patT1(:).';
+
+figure('Color', 'w');
+hold on; grid on;
+
+% Palette Colori
+col_sani = [0.2, 0.6, 0.85]; % Blu
+col_patT0 = [0.85, 0.3, 0.3];  % Rosso
+col_patT1 = [0.5, 0.2, 0.6];  % Viola
+
+% SD
+y_upper_sani = media_sani + sd_sani;
+y_lower_sani = media_sani - sd_sani;
+fill([t_norm, fliplr(t_norm)], [y_upper_sani, fliplr(y_lower_sani)], col_sani, 'EdgeColor', 'none', 'FaceAlpha', 0.25, 'HandleVisibility', 'off');
+
+y_upper_patT0 = media_patT0 + sd_patT0;
+y_lower_patT0 = media_patT0 - sd_patT0;
+fill([t_norm, fliplr(t_norm)], [y_upper_patT0, fliplr(y_lower_patT0)], col_patT0, 'EdgeColor', 'none', 'FaceAlpha', 0.25, 'HandleVisibility', 'off');
+
+y_upper_patT1 = media_patT1 + sd_patT1;
+y_lower_patT1 = media_patT1 - sd_patT1;
+fill([t_norm, fliplr(t_norm)], [y_upper_patT1, fliplr(y_lower_patT1)], col_patT1, 'EdgeColor', 'none', 'FaceAlpha', 0.25, 'HandleVisibility', 'off');
+
+% media
+h1 = plot(t_norm, media_sani, 'Color', col_sani, 'LineWidth', 2.5, 'DisplayName', 'Sani');
+h2 = plot(t_norm, media_patT0,  'Color', col_patT0,  'LineWidth', 2.5, 'DisplayName', 'Patologici T0');
+h3 = plot(t_norm, media_patT1,  'Color', col_patT1,  'LineWidth', 2.5, 'DisplayName', 'Patologici T1');
+
+% grafico
+xlabel('Ciclo di Movimento (%)', 'FontSize', 12, 'FontWeight', 'bold');
+ylabel('Angolo Articolare [deg]', 'FontSize', 12, 'FontWeight', 'bold');
+title(['Andamento Angolare: Flex '], 'FontSize', 13, 'FontWeight', 'bold');
+
+xlim([0, 100]);
+legend([h1, h2, h3], 'Location', 'best');
+set(gca, 'Box', 'off', 'TickDir', 'out', 'FontSize', 11, 'FontName', 'Arial');
