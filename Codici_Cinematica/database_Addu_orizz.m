@@ -644,3 +644,56 @@ end
 % salvataggio 
 Database_Patologici_T0_vs_T1 = cell2table(dati_pat, 'VariableNames', headers_pat);
 writetable(Database_Patologici_T0_vs_T1, 'Database Patologici lato non affetto (T0 vs T1)_Addu orizz.xlsx');
+
+%% SANI (Media Dx/Sx) vs PATOLOGICI T1 (Lato non Affetto)
+
+headers_tot = [{'Soggetto', 'Gruppo', 'Lato'}, nomi_metriche];
+
+% sani
+dati_sani = cell(num_soggetti_sani, length(headers_tot));
+
+for ii = 1:num_soggetti_sani
+    soggetto_corrente = soggetti_sani(ii);
+
+    dati_sani{ii, 1} = soggetto_corrente;
+    dati_sani{ii, 2} = 'Sano';
+    dati_sani{ii, 3} = 'Media DX/SX';
+
+    vals_Dx = fun_estrai_metriche_lato(tab_grezza_sani, soggetto_corrente, 'Dx');
+    vals_Sx = fun_estrai_metriche_lato(tab_grezza_sani, soggetto_corrente, 'Sx');
+
+    vals_medio = mean([vals_Dx; vals_Sx], 1, 'omitnan');
+
+    for kk = 1:num_metriche
+        dati_sani{ii, 3 + kk} = vals_medio(kk);
+    end
+end
+
+% patologici T1
+dati_pat = cell(num_pat, length(headers_tot));
+
+for ii = 1:num_pat
+    soggetto_corrente = string(info_soggetti{ii, 1});
+    lato_affetto = upper(strip(string(info_soggetti{ii, 2})));
+
+    if lato_affetto == "DX"
+        lato_non_affetto = "SX";
+    elseif lato_affetto == "SX"
+        lato_non_affetto = "DX";
+    end
+
+    dati_pat{ii, 1} = soggetto_corrente;
+    dati_pat{ii, 2} = 'Patologico';
+    dati_pat{ii, 3} = lato_non_affetto;
+
+    vals_non_affetto = fun_estrai_metriche_lato(tab_grezza_pat_T1, soggetto_corrente, lato_non_affetto);
+
+    for kk = 1:num_metriche
+        dati_pat{ii, 3 + kk} = vals_non_affetto(kk);
+    end
+end
+
+% salvataggio 
+dati_sani_vs_pat = [dati_sani; dati_pat];
+Database_Sani_vs_Patologi_T1 = cell2table(dati_sani_vs_pat, 'VariableNames', headers_tot);
+writetable(Database_Sani_vs_Patologi_T1, 'Database Sani vs Patologici non affetto T1_Addu_orizz.xlsx');

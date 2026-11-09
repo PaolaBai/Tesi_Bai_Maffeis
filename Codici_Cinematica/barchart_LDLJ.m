@@ -582,3 +582,4 @@ set(lgd, 'FontWeight', 'bold');
 hold off;
 
 exportgraphics(gcf, 'LDLJ_Ritorno.png', 'Resolution', 300);
+
